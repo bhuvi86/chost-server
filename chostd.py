@@ -7,6 +7,7 @@ import cherrypy
 
 class StringGenerator(object):
     cherrypy.server.socket_host = '0.0.0.0'
+    sudo_password = 'admin'
     @cherrypy.expose
     def index(self):
         return "Hello world!"
@@ -43,25 +44,23 @@ class StringGenerator(object):
     def mkfs(self, name):
         if ("dev" not in name):
               name = "/dev/"+name
-        #set root access
-        # p = subprocess.Popen(["sudo","bash"], stdout=subprocess.PIPE)
-        #(output, err) = p.communicate()
-        #do mkfs
-        p = subprocess.Popen(["sudo","mkfs","-F","-t","ext3",name], stdout=subprocess.PIPE)
-        (output, err) = p.communicate()
-        message = output.split("\n")
-        return json.dumps(message)
+        print name
+        p = subprocess.Popen(["sudo","-S","mkfs","-F",name], stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+        (output, err) = p.communicate(self.sudo_password)
+        return json.dumps(output)
 
     @cherrypy.expose
     def mount(self, name, path):    
         if ("dev" not in name):
               name = "/dev/"+name
+        print name
+        print path
         #create path
-        p = subprocess.Popen(["sudo","mkdir","-p", path], stdout=subprocess.PIPE)
-        (output, err) = p.communicate()
+        p = subprocess.Popen(["sudo","-S","mkdir","-p", path],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (output, err) = p.communicate(self.sudo_password)
         #mount
-        p = subprocess.Popen(["sudo","mount",name, path], stdout=subprocess.PIPE)
-        (output, err) = p.communicate()
+        p = subprocess.Popen(["sudo","-S","mount",name, path],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        (output, err) = p.communicate(self.sudo_password)
         return json.dumps(output)
       
 if __name__ == '__main__':
